@@ -319,6 +319,28 @@ where
         self.history_by_block_hash(block)
     }
 
+    /// Storage provider for safe state.
+    fn safe(&self) -> Result<StateProviderBox<'_>> {
+        trace!(target: "providers::blockchain", "Getting provider for safe state");
+
+        // TODO: get the safe block
+        let safe_block = todo!();
+        let state_provider = self.history_by_block_hash(safe_block.hash)?;
+        let post_state_provider = PostStateProvider::new(state_provider, safe_block);
+        Ok(Box::new(post_state_provider))
+    }
+
+    /// Storage provider for finalized state.
+    fn finalized(&self) -> Result<StateProviderBox<'_>> {
+        trace!(target: "providers::blockchain", "Getting provider for finalized state");
+
+        // TODO: get the finalized block
+        let finalized_block = todo!();
+        let state_provider = self.history_by_block_hash(finalized_block.hash)?;
+        let post_state_provider = PostStateProvider::new(state_provider, finalized_block);
+        Ok(Box::new(post_state_provider))
+    }
+
     /// Storage provider for pending state.
     fn pending(&self) -> Result<StateProviderBox<'_>> {
         trace!(target: "providers::blockchain", "Getting provider for pending state");

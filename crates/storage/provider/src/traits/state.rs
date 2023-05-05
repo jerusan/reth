@@ -105,12 +105,8 @@ pub trait StateProviderFactory: Send + Sync {
     ) -> Result<StateProviderBox<'_>> {
         match number_or_tag {
             BlockNumberOrTag::Latest => self.latest(),
-            BlockNumberOrTag::Finalized => {
-                todo!()
-            }
-            BlockNumberOrTag::Safe => {
-                todo!()
-            }
+            BlockNumberOrTag::Finalized => self.finalized(),
+            BlockNumberOrTag::Safe => self.safe(),
             BlockNumberOrTag::Earliest => self.history_by_block_number(0),
             BlockNumberOrTag::Pending => self.pending(),
             BlockNumberOrTag::Number(num) => self.history_by_block_number(num),
@@ -132,6 +128,12 @@ pub trait StateProviderFactory: Send + Sync {
     ///
     /// This will return a [StateProvider] for either a historical or pending block.
     fn state_by_block_hash(&self, block: BlockHash) -> Result<StateProviderBox<'_>>;
+
+    /// Storage provider for safe state.
+    fn safe(&self) -> Result<StateProviderBox<'_>>;
+
+    /// Storage provider for finalized state.
+    fn finalized(&self) -> Result<StateProviderBox<'_>>;
 
     /// Storage provider for pending state.
     ///

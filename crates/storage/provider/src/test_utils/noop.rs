@@ -220,6 +220,14 @@ impl StateProviderFactory for NoopProvider {
         Ok(Box::new(*self))
     }
 
+    fn safe(&self) -> Result<StateProviderBox<'_>> {
+        Ok(Box::new(*self))
+    }
+
+    fn finalized(&self) -> Result<StateProviderBox<'_>> {
+        Ok(Box::new(*self))
+    }
+
     fn pending(&self) -> Result<StateProviderBox<'_>> {
         Ok(Box::new(*self))
     }

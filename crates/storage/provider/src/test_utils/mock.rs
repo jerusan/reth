@@ -387,6 +387,14 @@ impl StateProviderFactory for MockEthProvider {
         todo!()
     }
 
+    fn safe(&self) -> Result<StateProviderBox<'_>> {
+        todo!()
+    }
+
+    fn finalized(&self) -> Result<StateProviderBox<'_>> {
+        todo!()
+    }
+
     fn pending(&self) -> Result<StateProviderBox<'_>> {
         todo!()
     }
@@ -417,6 +425,14 @@ impl StateProviderFactory for Arc<MockEthProvider> {
     }
 
     fn pending(&self) -> Result<StateProviderBox<'_>> {
+        todo!()
+    }
+
+    fn safe(&self) -> Result<StateProviderBox<'_>> {
+        todo!()
+    }
+
+    fn finalized(&self) -> Result<StateProviderBox<'_>> {
         todo!()
     }
 
