@@ -226,8 +226,10 @@ where
         let resp = self.buffered_responses.pop()?;
         self.metrics.buffered_responses.decrement(1.);
 
-        // since we're popping a since response we need to decrement the size
-        self.metrics.buffered_size.decrement(size_of_val(&resp) as f64);
+        // we need the val of each - could probably optimize into size_of_val(&*resp.0)
+        for resp in &resp.0 {
+            self.metrics.buffered_size.decrement(size_of_val(resp) as f64);
+        }
 
         self.num_buffered_blocks -= resp.0.len();
         self.metrics.buffered_blocks.set(self.num_buffered_blocks as f64);
