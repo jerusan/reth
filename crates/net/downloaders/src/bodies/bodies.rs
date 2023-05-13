@@ -218,17 +218,19 @@ where
         self.latest_queued_block_number = Some(bodies.last().expect("is not empty").block_number());
         self.queued_bodies.extend(bodies.into_iter());
         self.metrics.queued_blocks.set(self.queued_bodies.len() as f64);
-        self.metrics.queued_size.set(size_of_val(&self.queued_bodies) as f64);
+        self.metrics.queued_size.set(size_of_val(&*self.queued_bodies) as f64);
     }
 
     /// Removes the next response from the buffer.
     fn pop_buffered_response(&mut self) -> Option<OrderedBodiesResponse> {
         let resp = self.buffered_responses.pop()?;
         self.metrics.buffered_responses.decrement(1.);
+
+        // since we're popping a since response we need to decrement the size
+        self.metrics.buffered_size.increment(size_of_val(&resp) as f64);
+
         self.num_buffered_blocks -= resp.0.len();
         self.metrics.buffered_blocks.set(self.num_buffered_blocks as f64);
-        // TODO: just calculate the size of the popped response?
-        self.metrics.buffered_size.set(size_of_val(&self.buffered_responses) as f64);
         Some(resp)
     }
 
@@ -236,11 +238,15 @@ where
     fn buffer_bodies_response(&mut self, response: Vec<BlockResponse>) {
         self.num_buffered_blocks += response.len();
         self.metrics.buffered_blocks.set(self.num_buffered_blocks as f64);
+
+        // loop through all responses and increment the size
+        for resp in &response {
+            self.metrics.buffered_size.increment(size_of_val(resp) as f64);
+        }
+
         let response = OrderedBodiesResponse(response);
         self.buffered_responses.push(response);
         self.metrics.buffered_responses.set(self.buffered_responses.len() as f64);
-        // TODO: just calculate the size of the popped response?
-        self.metrics.buffered_size.set(size_of_val(&self.buffered_responses) as f64);
     }
 
     /// Returns a response if it's first block number matches the next expected.
@@ -275,7 +281,7 @@ where
             let next_batch = self.queued_bodies.drain(..self.stream_batch_size).collect::<Vec<_>>();
             self.metrics.total_flushed.increment(next_batch.len() as u64);
             self.metrics.queued_blocks.set(self.queued_bodies.len() as f64);
-            self.metrics.queued_size.set(size_of_val(&self.queued_bodies) as f64);
+            self.metrics.queued_size.set(size_of_val(&*self.queued_bodies) as f64);
             return Some(next_batch)
         }
         None
@@ -426,7 +432,7 @@ where
             let next_batch = this.queued_bodies.drain(..batch_size).collect::<Vec<_>>();
             this.metrics.total_flushed.increment(next_batch.len() as u64);
             this.metrics.queued_blocks.set(this.queued_bodies.len() as f64);
-            this.metrics.queued_size.set(size_of_val(&this.queued_bodies) as f64);
+            this.metrics.queued_size.set(size_of_val(&*this.queued_bodies) as f64);
             return Poll::Ready(Some(Ok(next_batch)))
         }
 
