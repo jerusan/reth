@@ -32,8 +32,12 @@ pub struct DownloaderMetrics {
     /// These are bodies that have been received, but not cannot be committed yet because they're
     /// not contiguous
     pub buffered_blocks: Gauge,
-    /// The number blocks that are contiguous and are queued for insertion into the db.
+    /// The size in bytes of the internal buffer of the downloader.
+    pub buffered_size: Gauge,
+    /// The number of blocks that are contiguous and are queued for insertion into the db.
     pub queued_blocks: Gauge,
+    /// The total size of the contiguous blocks that are queued for insertion into the db.
+    pub queued_size: Gauge,
     /// The number of out-of-order requests sent by the downloader.
     /// The consumer of the download stream is able to re-request data (headers or bodies) in case
     /// it encountered a recoverable error (e.g. during insertion).
