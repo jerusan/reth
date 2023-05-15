@@ -15,11 +15,11 @@ use reth_interfaces::{
     },
 };
 use reth_primitives::{BlockNumber, SealedHeader};
+use reth_rlp::Encodable;
 use reth_tasks::{TaskSpawner, TokioTaskExecutor};
 use std::{
     cmp::Ordering,
     collections::BinaryHeap,
-    mem::size_of_val,
     ops::RangeInclusive,
     pin::Pin,
     sync::Arc,
@@ -216,9 +216,15 @@ where
     /// Queues bodies and sets the latest queued block number
     fn queue_bodies(&mut self, bodies: Vec<BlockResponse>) {
         self.latest_queued_block_number = Some(bodies.last().expect("is not empty").block_number());
+        for body in &bodies {
+            let len = match body {
+                BlockResponse::Full(block) => block.length(),
+                BlockResponse::Empty(header) => header.length(),
+            };
+            self.metrics.queued_size.increment(len as f64);
+        }
         self.queued_bodies.extend(bodies.into_iter());
         self.metrics.queued_blocks.set(self.queued_bodies.len() as f64);
-        self.metrics.queued_size.set(size_of_val(&*self.queued_bodies) as f64);
     }
 
     /// Removes the next response from the buffer.
@@ -228,7 +234,11 @@ where
 
         // we need the val of each - could probably optimize into size_of_val(&*resp.0)
         for resp in &resp.0 {
-            self.metrics.buffered_size.decrement(size_of_val(resp) as f64);
+            let len = match resp {
+                BlockResponse::Full(block) => block.length(),
+                BlockResponse::Empty(header) => header.length(),
+            };
+            self.metrics.buffered_size.decrement(len as f64);
         }
 
         self.num_buffered_blocks -= resp.0.len();
@@ -242,8 +252,12 @@ where
         self.metrics.buffered_blocks.set(self.num_buffered_blocks as f64);
 
         // loop through all responses and increment the size
-        for resp in &response {
-            self.metrics.buffered_size.increment(size_of_val(resp) as f64);
+        for body in &response {
+            let len = match body {
+                BlockResponse::Full(block) => block.length(),
+                BlockResponse::Empty(header) => header.length(),
+            };
+            self.metrics.buffered_size.increment(len as f64);
         }
 
         let response = OrderedBodiesResponse(response);
@@ -283,7 +297,15 @@ where
             let next_batch = self.queued_bodies.drain(..self.stream_batch_size).collect::<Vec<_>>();
             self.metrics.total_flushed.increment(next_batch.len() as u64);
             self.metrics.queued_blocks.set(self.queued_bodies.len() as f64);
-            self.metrics.queued_size.set(size_of_val(&*self.queued_bodies) as f64);
+
+            for body in &next_batch {
+                let len = match body {
+                    BlockResponse::Full(block) => block.length(),
+                    BlockResponse::Empty(header) => header.length(),
+                };
+                self.metrics.queued_size.decrement(len as f64);
+            }
+
             return Some(next_batch)
         }
         None
@@ -434,7 +456,14 @@ where
             let next_batch = this.queued_bodies.drain(..batch_size).collect::<Vec<_>>();
             this.metrics.total_flushed.increment(next_batch.len() as u64);
             this.metrics.queued_blocks.set(this.queued_bodies.len() as f64);
-            this.metrics.queued_size.set(size_of_val(&*this.queued_bodies) as f64);
+
+            for body in &next_batch {
+                let len = match body {
+                    BlockResponse::Full(block) => block.length(),
+                    BlockResponse::Empty(header) => header.length(),
+                };
+                this.metrics.queued_size.decrement(len as f64);
+            }
             return Poll::Ready(Some(Ok(next_batch)))
         }
 
