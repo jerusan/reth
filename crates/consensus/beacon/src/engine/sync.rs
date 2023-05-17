@@ -85,6 +85,11 @@ where
         self.inflight_full_block_requests.clear();
     }
 
+    /// Returns whether or not the sync controller is set to run the pipeline continuously.
+    pub(crate) fn run_pipeline_continuously(&self) -> bool {
+        self.run_pipeline_continuously
+    }
+
     /// Returns `true` if the pipeline is idle.
     pub(crate) fn is_pipeline_idle(&self) -> bool {
         self.pipeline_state.is_idle()
