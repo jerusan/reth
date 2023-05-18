@@ -14,5 +14,5 @@ reth-rpc-types = { path = "../../rpc/rpc-types" }
 revm = { version = "3" }
 # remove from reth and reexport from revm
 hashbrown = "0.13"
-
+hex = "0.4"
 serde = { version = "1.0", features = ["derive"] }

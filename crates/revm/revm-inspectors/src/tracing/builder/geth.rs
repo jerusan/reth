@@ -3,7 +3,10 @@
 use crate::tracing::{types::CallTraceNode, TracingInspectorConfig};
 use reth_primitives::{Address, JsonU256, H256, U256};
 use reth_rpc_types::trace::geth::*;
-use revm::interpreter::opcode;
+use revm::{
+    interpreter::opcode,
+    primitives::{ResultAndState},
+};
 use std::collections::{BTreeMap, HashMap};
 
 /// A type for creating geth style traces
@@ -150,5 +153,37 @@ impl GethTraceBuilder {
                 return call
             }
         }
+    }
+
+    /// Generate a geth-style traces for the prestate tracer.
+    ///
+    /// This creates prestate traces.
+    pub fn geth_prestate_traces(
+        &self,
+        opts: PreStateConfig,
+        post_state: ResultAndState,
+    ) -> PreStateFrame {
+
+        //TODO: implement config logic
+
+        let post_state_map = post_state
+            .state
+            .iter()
+            .map(|(key, value)| {
+               
+                let account_state = AccountState {
+                    balance: Some(value.info.balance),
+                    code: Some(
+                        hex::encode(&value.info.code.to_owned().unwrap_or_default().bytecode).to_string(),
+                    ),
+                    nonce: Some(U256::from(value.info.nonce)),
+                    storage: None, //TODO: fetch from value.storage,
+                };
+
+                (key.clone(), account_state)
+            })
+            .collect();
+
+        return reth_rpc_types::trace::geth::PreStateFrame::Default(PreStateMode(post_state_map));
     }
 }

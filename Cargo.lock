@@ -5225,6 +5225,7 @@ name = "reth-revm-inspectors"
 version = "0.1.0"
 dependencies = [
  "hashbrown 0.13.2",
+ "hex",
  "reth-primitives",
  "reth-rpc-types",
  "revm",

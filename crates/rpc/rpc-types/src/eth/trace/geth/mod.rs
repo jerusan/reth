@@ -11,7 +11,7 @@ pub use self::{
     call::{CallConfig, CallFrame, CallLogFrame},
     four_byte::FourByteFrame,
     noop::NoopFrame,
-    pre_state::{PreStateConfig, PreStateFrame},
+    pre_state::{PreStateConfig, PreStateFrame, AccountState, PreStateMode},
 };
 
 mod call;

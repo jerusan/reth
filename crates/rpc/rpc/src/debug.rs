@@ -528,7 +528,21 @@ fn trace_transaction(
                     return Ok((frame.into(), res.state))
                 }
                 GethDebugBuiltInTracerType::PreStateTracer => {
-                    todo!()
+                    let prestate_config =
+                    tracer_config.and_then(|c| c.into_pre_state_config()).unwrap_or_default();
+
+                let mut inspector =
+                    TracingInspector::new(TracingInspectorConfig::from_geth_config(&config));
+
+                // TODO: make a copy of the db or return db back in inspect()
+                // let state_db_copy: Box<dyn StateProvider> = db.db.into_inner();
+
+                let (post_state, _) = inspect(db, env.clone(), &mut inspector)?;        
+            
+                let pre_state_frame = inspector
+                    .into_geth_builder().geth_prestate_traces(prestate_config, post_state.clone());
+
+                return Ok((pre_state_frame.into(), post_state.state));
                 }
                 GethDebugBuiltInTracerType::NoopTracer => {
                     Ok((NoopFrame::default().into(), Default::default()))
